@@ -1,3 +1,23 @@
+/**
+ * Check if the player collides with something in the screen.
+ * @param {Object} object Object that player may collide.
+ */
+function checkCollision(object) {
+  var cellX = 50.5;
+
+  if (object.y === player.y) {
+    // used for gems
+    if (object.x === player.x) return true;
+
+    // used to calculate collision with bugs
+    if (player.x >= object.x - cellX && player.x <= object.x + cellX * 1.5) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 // Enemies our player must avoid
 var Enemy = function(startX, startY) {
   // Variables applied to each of our instances go here,
@@ -20,6 +40,10 @@ Enemy.prototype.update = function(dt) {
   // which will ensure the game runs at the same speed for
   // all computers.
   this.x += this.speedX * dt;
+  if (this.x > 505) {
+    this.x = this.startX;
+    this.speedX = Math.random() * 100 + 60;
+  }
 };
 
 // Draw the enemy on the screen, required method for game
@@ -86,11 +110,11 @@ Player.prototype.handleInput = function(direction) {
 // Now instantiate your objects.
 // Place all enemy objects in an array called allEnemies
 var allEnemies = [
-  new Enemy(-101, 42.5),
-  new Enemy(-101, 83 + 42.5),
-  new Enemy(-101, 83 * 2 + 42.5),
-  new Enemy(-101, 83 * 3 + 42.5),
-  new Enemy(-101, 83 * 4 + 42.5)
+  new Enemy(-101, 41.5),
+  new Enemy(-101, 83 + 41.5),
+  new Enemy(-101, 83 * 2 + 41.5),
+  new Enemy(-101, 83 * 3 + 41.5),
+  new Enemy(-101, 83 * 4 + 41.5)
 ];
 // Place the player object in a variable called player
 var player = new Player();
@@ -107,3 +131,7 @@ document.addEventListener("keyup", function(e) {
 
   player.handleInput(allowedKeys[e.keyCode]);
 });
+
+// Project Constants
+var WIDTH = 505;
+var HEIGHT = 606;
