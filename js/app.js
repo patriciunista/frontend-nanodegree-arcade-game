@@ -6,6 +6,8 @@ var Enemy = function() {
   // The image/sprite for our enemies, this uses
   // a helper we've provided to easily load images
   this.sprite = "images/enemy-bug.png";
+  this.x = 0;
+  this.y = 0;
 };
 
 // Update the enemy's position, required method for game
@@ -24,11 +26,58 @@ Enemy.prototype.render = function() {
 // Now write your own player class
 // This class requires an update(), render() and
 // a handleInput() method.
-var Player = function() {};
+var Player = function() {
+  this.sprite = "images/char-boy.png";
+  this.startX = 202; // center of columns
+  this.startY = 83 * 5 + 41.5; // center of rows
+  this.speedX = 101;
+  this.speedY = 83;
+  this.x = this.startX;
+  this.y = this.startY;
+};
 
-Player.prototype.update = function() {};
-Player.prototype.render = function() {};
-Player.prototype.handleInput = function() {};
+Player.prototype.update = function() {
+  // nothing for now
+};
+
+/**
+ * Renders player's image at it's position.
+ */
+Player.prototype.render = render = function() {
+  ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+};
+
+/**
+ * Event that occurs every time user press an allowed key.
+ * Updates the position of the player given a direction and
+ * checks if is in the limit of the canvas to allow it.
+ */
+Player.prototype.handleInput = function(direction) {
+  switch (direction) {
+    case "left":
+      if (this.x > this.speedX / 2) {
+        this.x -= this.speedX;
+      }
+      break;
+    case "up":
+      if (this.y > 0) {
+        this.y -= this.speedY;
+      }
+      break;
+    case "right":
+      if (this.x + this.speedX < 505 - this.speedX / 2) {
+        this.x += this.speedX;
+      }
+      break;
+    case "down":
+      if (this.y + this.speedY <= this.startY) {
+        this.y += this.speedY;
+      }
+      break;
+    default:
+      break;
+  }
+};
 
 // Now instantiate your objects.
 // Place all enemy objects in an array called allEnemies
