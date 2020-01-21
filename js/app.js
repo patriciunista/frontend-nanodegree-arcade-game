@@ -1,21 +1,9 @@
 /**
- * Check if the player collides with something in the screen.
- * @param {Object} object Object that player may collide.
+ * Returns a random number given a threshold.
+ * @param {Number} threshold
  */
-function checkCollision(object) {
-  var cellX = 50.5;
-
-  if (object.y === player.y) {
-    // used for gems
-    if (object.x === player.x) return true;
-
-    // used to calculate collision with bugs
-    if (player.x >= object.x - cellX && player.x <= object.x + cellX * 1.5) {
-      return true;
-    }
-  }
-
-  return false;
+function getRandomSpeed(threshold) {
+  return Math.random() * (threshold * 25) + 50;
 }
 
 // Enemies our player must avoid
@@ -25,10 +13,10 @@ var Enemy = function(startX, startY) {
 
   // The image/sprite for our enemies, this uses
   // a helper we've provided to easily load images
-  this.sprite = "images/enemy-bug.png";
+  this.sprite = 'images/enemy-bug.png';
   this.startX = startX;
   this.startY = startY;
-  this.speedX = Math.random() * 100 + 50;
+  this.speedX = getRandomSpeed(level);
   this.x = startX;
   this.y = startY;
 };
@@ -42,7 +30,11 @@ Enemy.prototype.update = function(dt) {
   this.x += this.speedX * dt;
   if (this.x > 505) {
     this.x = this.startX;
-    this.speedX = Math.random() * 100 + 60;
+    this.speedX = getRandomSpeed(level);
+  }
+
+  if (player.checkCollision(this)) {
+    player.resetPosition();
   }
 };
 
@@ -55,13 +47,14 @@ Enemy.prototype.render = function() {
 // This class requires an update(), render() and
 // a handleInput() method.
 var Player = function() {
-  this.sprite = "images/char-boy.png";
+  this.sprite = 'images/char-boy.png';
   this.startX = 202; // center of columns
   this.startY = 83 * 5 + 41.5; // center of rows
   this.speedX = 101;
   this.speedY = 83;
   this.x = this.startX;
   this.y = this.startY;
+  this.collided = false;
 };
 
 Player.prototype.update = function() {
@@ -69,9 +62,38 @@ Player.prototype.update = function() {
 };
 
 /**
+ * Check if the player collides with something in the screen.
+ * @param {Object} object Object that player may collide.
+ */
+Player.prototype.checkCollision = function(object) {
+  var cellX = 50.5;
+
+  if (object.y === this.y) {
+    // used for gems
+    if (object.x === this.x) return true;
+
+    // used to calculate collision with bugs
+    if (this.x >= object.x - cellX && this.x <= object.x + cellX * 1.5) {
+      this.collided = true;
+      return true;
+    }
+  }
+
+  return false;
+};
+
+/**
+ * Resets the player position to it's initial.
+ */
+Player.prototype.resetPosition = function() {
+  this.x = this.startX;
+  this.y = this.startY;
+};
+
+/**
  * Renders player's image at it's position.
  */
-Player.prototype.render = render = function() {
+Player.prototype.render = function() {
   ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
 };
 
@@ -82,22 +104,27 @@ Player.prototype.render = render = function() {
  */
 Player.prototype.handleInput = function(direction) {
   switch (direction) {
-    case "left":
+    case 'left':
       if (this.x > this.speedX / 2) {
         this.x -= this.speedX;
       }
       break;
-    case "up":
+    case 'up':
       if (this.y > 0) {
         this.y -= this.speedY;
+        if (this.y < 0) {
+          this.collided = true;
+          level += 1;
+          this.resetPosition();
+        }
       }
       break;
-    case "right":
+    case 'right':
       if (this.x + this.speedX < 505 - this.speedX / 2) {
         this.x += this.speedX;
       }
       break;
-    case "down":
+    case 'down':
       if (this.y + this.speedY <= this.startY) {
         this.y += this.speedY;
       }
@@ -107,26 +134,35 @@ Player.prototype.handleInput = function(direction) {
   }
 };
 
+/**
+ * Generates the number of enemies we want for a game.
+ *
+ * @param {Number} num Number of enemies to generate.
+ */
+function generateEnemies(num) {
+  var numEnemies = num !== undefined && num >= 3 ? num : 3;
+  var newEnemies = [];
+
+  for (var i = 0; i < numEnemies; ++i) {
+    newEnemies.push(new Enemy(-101, 83 * (i % 5) + 41.5));
+  }
+  return newEnemies;
+}
+
 // Now instantiate your objects.
 // Place all enemy objects in an array called allEnemies
-var allEnemies = [
-  new Enemy(-101, 41.5),
-  new Enemy(-101, 83 + 41.5),
-  new Enemy(-101, 83 * 2 + 41.5),
-  new Enemy(-101, 83 * 3 + 41.5),
-  new Enemy(-101, 83 * 4 + 41.5)
-];
+var allEnemies = generateEnemies(level);
 // Place the player object in a variable called player
 var player = new Player();
 
 // This listens for key presses and sends the keys to your
 // Player.handleInput() method. You don't need to modify this.
-document.addEventListener("keyup", function(e) {
+document.addEventListener('keyup', function(e) {
   var allowedKeys = {
-    37: "left",
-    38: "up",
-    39: "right",
-    40: "down"
+    37: 'left',
+    38: 'up',
+    39: 'right',
+    40: 'down'
   };
 
   player.handleInput(allowedKeys[e.keyCode]);
@@ -135,3 +171,4 @@ document.addEventListener("keyup", function(e) {
 // Project Constants
 var WIDTH = 505;
 var HEIGHT = 606;
+var level = 2;
