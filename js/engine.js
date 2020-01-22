@@ -20,9 +20,10 @@ var Engine = (function(global) {
    */
   var doc = global.document,
     win = global.window,
-    canvas = doc.createElement('canvas'),
-    ctx = canvas.getContext('2d'),
-    lastTime;
+    canvas = doc.createElement("canvas"),
+    ctx = canvas.getContext("2d"),
+    lastTime,
+    timer;
 
   canvas.width = WIDTH || 505;
   canvas.height = HEIGHT || 606;
@@ -45,6 +46,7 @@ var Engine = (function(global) {
      * our update function since it may be used for smooth animation.
      */
     update(dt);
+    timer.update();
     render();
 
     /* Set our lastTime variable which is used to determine the time delta
@@ -65,6 +67,8 @@ var Engine = (function(global) {
   function init() {
     reset();
     lastTime = Date.now();
+    timer = new Timer();
+    timer.init(level);
     main();
   }
 
@@ -81,6 +85,10 @@ var Engine = (function(global) {
     updateEntities(dt);
     if (player.collided) {
       player.collided = false;
+      init();
+    } else if (timer.outOfTime) {
+      player.lives = 0;
+      player.resetPosition();
       reset();
     }
   }
@@ -99,6 +107,30 @@ var Engine = (function(global) {
     player.update();
   }
 
+  /**
+   * Function to handle canvas' header info such as
+   * the timer, player lives and the game status.
+   */
+  function updateHeader() {
+    var playing = player.lives && level < 11 && !timer.outOfTime;
+    var levelText = "Level: " + (level - 3);
+    var gameStatusText =
+      !playing && (!player.lives || timer.outOfTime)
+        ? "You lose :("
+        : "You win!";
+
+    if (playing) {
+      // timer info
+      timer.render(ctx);
+
+      // draw player info
+      ctx.fillText("Lives: " + player.lives, 0, 30);
+    }
+
+    // draw playing status
+    ctx.fillText(playing ? levelText : gameStatusText, 205, 30);
+  }
+
   /* This function initially draws the "game level", it will then call
    * the renderEntities function. Remember, this function is called every
    * game tick (or loop of the game engine) because that's how games work -
@@ -110,12 +142,12 @@ var Engine = (function(global) {
      * for that particular row of the game level.
      */
     var rowImages = [
-        'images/water-block.png', // Top row is water
-        'images/stone-block.png', // Row 1 of 3 of stone
-        'images/stone-block.png', // Row 2 of 3 of stone
-        'images/stone-block.png', // Row 3 of 3 of stone
-        'images/grass-block.png', // Row 1 of 2 of grass
-        'images/grass-block.png' // Row 2 of 2 of grass
+        "images/water-block.png", // Top row is water
+        "images/stone-block.png", // Row 1 of 3 of stone
+        "images/stone-block.png", // Row 2 of 3 of stone
+        "images/stone-block.png", // Row 3 of 3 of stone
+        "images/grass-block.png", // Row 1 of 2 of grass
+        "images/grass-block.png" // Row 2 of 2 of grass
       ],
       numRows = 6,
       numCols = 5,
@@ -142,6 +174,8 @@ var Engine = (function(global) {
       }
     }
 
+    updateHeader();
+
     renderEntities();
   }
 
@@ -165,7 +199,12 @@ var Engine = (function(global) {
    * those sorts of things. It's only called once by the init() method.
    */
   function reset() {
-    allEnemies = generateEnemies(level);
+    var outOfTime = timer && timer.outOfTime;
+    if (level < 11 && player.lives > 0 && !outOfTime) {
+      allEnemies = generateEnemies(level);
+    } else {
+      allEnemies = [];
+    }
   }
 
   /* Go ahead and load all of the images we know we're going to need to
@@ -173,11 +212,11 @@ var Engine = (function(global) {
    * all of these images are properly loaded our game will start.
    */
   Resources.load([
-    'images/stone-block.png',
-    'images/water-block.png',
-    'images/grass-block.png',
-    'images/enemy-bug.png',
-    'images/char-boy.png'
+    "images/stone-block.png",
+    "images/water-block.png",
+    "images/grass-block.png",
+    "images/enemy-bug.png",
+    "images/char-boy.png"
   ]);
   Resources.onReady(init);
 
